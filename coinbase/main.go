@@ -2,10 +2,12 @@ package coinbase
 
 import (
 	"log"
+	"sort"
 	"net/url"
 	"encoding/json"
 
 	"github.com/gorilla/websocket"
+	ob "github.com/jbloxsome/raptor/orderbook"
 )
 
 // Struct for deserialising messages received over the Coinbase websocket
@@ -18,14 +20,9 @@ type Message struct {
 	Changes [][]string
 }
 
-type Orderbook struct {
-	Bids [][]string
-	Asks [][]string
-}
-
 type Coinbase struct {
 	Pair string
-	Orderbook chan *Orderbook
+	Orderbook chan *ob.Orderbook
 	Connection *websocket.Conn
 }
 
@@ -43,8 +40,8 @@ func NewCoinbase(pair string) (*Coinbase, error) {
 		return nil, err
 	}
 
-	orderbook := make(chan *Orderbook)
-	var currentOrderbook Orderbook
+	orderbook := make(chan *ob.Orderbook)
+	currentOrderbook := ob.NewOrderbook()
 
 	go func() {
 		for {
@@ -62,71 +59,50 @@ func NewCoinbase(pair string) (*Coinbase, error) {
 			}
 
 			if asMessage.Type == "snapshot" {
-				currentOrderbook.Bids = asMessage.Bids
-				currentOrderbook.Asks = asMessage.Asks
+				for bid := range asMessage.Bids {
+					currentOrderbook.AddBidLevel(bid[0], bid[1])
+				}
+				
+				for ask := range asMessage.Asks {
+					currentOrderbook.AddAskLevel(ask[0], ask[1])
+				}
+
 				orderbook <-&currentOrderbook
 			} else if asMessage.Type == "l2update" {
 				
 				for _, change := range asMessage.Changes {
 					if change[0] == "buy" {
 						if change[2] != "0" {
-							found := false
-
-							for idx, bid := range currentOrderbook.Bids {
-								if bid[0] == change[1] {
-									currentOrderbook.Bids[idx] = []string{change[1], change[2]}
-									found = true
-									break
-								}
+							// Add or update bid level in orderbook
+							level := currentOrderbook.GetBidLevel(change[1])
+							if level != nil {
+								currentOrderbook.RemoveBidLevel(change[1])
 							}
 
-							if found == false {
-								currentOrderbook.Bids = append(currentOrderbook.Bids, []string{change[1], change[2]})
-								break
-							}
+							currentOrderbook.AddBidLevel(change[1], change[2])
 						} else {
-							for idx, bid := range currentOrderbook.Bids {
-								if bid[0] == change[1] {
-									currentOrderbook.Bids[idx] = currentOrderbook.Bids[len(currentOrderbook.Bids)-1]
-									currentOrderbook.Bids = currentOrderbook.Bids[:len(currentOrderbook.Bids)-1]
-									break
-								}
-							}
+							// Remove bid level from orderbook
+							currentOrderbook.RemoveBidLevel(change[1])
 						}
 					}
 
 					if change[0] == "sell" {
 						if change[2] != "0" {
-							found := false
-
-							for idx, ask := range currentOrderbook.Asks {
-								if ask[0] == change[1] {
-									currentOrderbook.Asks[idx] = []string{change[1], change[2]}
-									found = true
-									break
-								}
+							// Add or update ask level in orderbook
+							level := currentOrderbook.GetAskLevel(change[1])
+							if level != nil {
+								currentOrderbook.RemoveAskLevel(change[1])
 							}
 
-							if found == false {
-								currentOrderbook.Asks = append(currentOrderbook.Asks, []string{change[1], change[2]})
-								break
-							}
+							currentOrderbook.AddAskLevel(change[1], change[2])
 						} else {
-							for idx, ask := range currentOrderbook.Asks {
-								if ask[0] == change[1] {
-									currentOrderbook.Asks[idx] = currentOrderbook.Asks[len(currentOrderbook.Asks)-1]
-									currentOrderbook.Asks = currentOrderbook.Asks[:len(currentOrderbook.Asks)-1]
-									break
-								}
-							}
+							// Remove ask level from orderbook
+							currentOrderbook.RemoveAskLevel(change[1])
 						}
 					}
 				}
 
-				orderbook <-&Orderbook{
-					Bids: currentOrderbook.Bids,
-					Asks: currentOrderbook.Asks,
-				}
+				orderbook <-currentOrderbook
 			}	
 		}
 	}()
