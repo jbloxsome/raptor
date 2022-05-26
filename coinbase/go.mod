@@ -1,4 +1,4 @@
-module github.com/jbloxsome/raptor
+module github.com/jbloxsome/raptor/coinbase
 
 go 1.18
 
