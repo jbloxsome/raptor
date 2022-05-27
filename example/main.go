@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"log"
-	"strconv"
 
 	"github.com/jbloxsome/raptor/coinbase"
 )
@@ -28,16 +27,11 @@ func main() {
 
 	go func() {
 		for orderbook := range btc_usd.Orderbook {
-			bestBid, err := strconv.ParseFloat(orderbook.Bids[0][0], 32)
-			if err != nil {
-				panic(err)
-			}
-			// bestAsk, err := strconv.ParseFloat(orderbook.Asks[0][0], 32)
-			// if err != nil {
-			// 	panic(err)
-			// }
-			// midMarket := (bestBid + bestAsk) / 2
-			log.Printf("BTC-USD: %f", bestBid) 
+			maxBid := orderbook.Bids.Max()
+			minAsk := orderbook.Asks.Min()
+
+			midMarket := (maxBid + minAsk) / 2
+			log.Printf("BTC-USD: %f", midMarket) 
 		}
 	}()
 

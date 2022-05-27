@@ -1,57 +1,57 @@
 package orderbook
 
 import (
-	rbt "github.com/emirpasic/gods/trees/redblacktree"
+	"github.com/jbloxsome/raptor/rbbst"
 )
 
 type Orderbook struct {
-	Bids *rbt.Tree
-	Asks *rbt.Tree
+	Bids *rbbst.RedBlackBST
+	Asks *rbbst.RedBlackBST
 }
 
 func NewOrderbook() Orderbook {
-	bids := rbt.NewWithStringComparator()
-	asks := rbt.NewWithStringComparator()
+	bids := rbbst.NewRedBlackBST()
+	asks := rbbst.NewRedBlackBST()
 
 	return Orderbook{
 		Asks: &asks,
-		Bids: &bids
+		Bids: &bids,
 	}
 }
 
-func (ob *Orderbook) AddBidLevel(price string, volume string) {
+func (ob *Orderbook) AddBidLevel(price float64, volume float64) {
 	ob.Bids.Put(price, volume)
 }
 
-func (ob *Orderbook) RemoveBidLevel(price string) {
-	ob.Bids.Remove(price)
+func (ob *Orderbook) RemoveBidLevel(price float64) {
+	ob.Bids.Delete(price)
 }
 
-func (ob *Orderbook) GetBidLevel(price string) []string {
-	volume, found :=  ob.Bids.Get(price)
-
-	if found {
-		return []string{price, volume}
-	} else {
+func (ob *Orderbook) GetBidLevel(price float64) []float64 {
+	contains := ob.Bids.Contains(price)
+	if !contains {
 		return nil
 	}
+	
+	volume := ob.Bids.Get(price)
+	return []float64{price, volume}
 }
 
-func (ob *Orderbook) AddAskLevel(price string, volume string) {
-	ob.Ask.Put(price, volume)
+func (ob *Orderbook) AddAskLevel(price float64, volume float64) {
+	ob.Asks.Put(price, volume)
 }
 
-func (ob *Orderbook) RemoveAskLevel(price string) {
-	ob.Ask.Remove(price)
+func (ob *Orderbook) RemoveAskLevel(price float64) {
+	ob.Asks.Delete(price)
 }
 
-func (ob *Orderbook) GetAskLevel(price string) []string {
-	volume, found :=  ob.Ask.Get(price)
-
-	if found {
-		return []string{price, volume}
-	} else {
+func (ob *Orderbook) GetAskLevel(price float64) []float64 {
+	contains := ob.Asks.Contains(price)
+	if !contains {
 		return nil
 	}
+
+	volume :=  ob.Asks.Get(price)
+	return []float64{price, volume}
 }
 
