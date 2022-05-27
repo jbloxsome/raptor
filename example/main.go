@@ -15,15 +15,15 @@ func main() {
 		panic(err)
 	}
 
-	eth_usd, err := coinbase.NewCoinbase("ETH-USD")
-	if err != nil {
-		panic(err)
-	}
+	// eth_usd, err := coinbase.NewCoinbase("ETH-USD")
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	btc_eth, err := coinbase.NewCoinbase("ETH-BTC")
-	if err != nil {
-		panic(err)
-	}
+	// btc_eth, err := coinbase.NewCoinbase("ETH-BTC")
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	go func() {
 		for orderbook := range btc_usd.Orderbook {
@@ -51,8 +51,8 @@ func main() {
 		select {
 		case <-interrupt:
 			btc_usd.Close()
-			eth_usd.Close()
-			btc_eth.Close()
+			// eth_usd.Close()
+			// btc_eth.Close()
 			return
 		}
 	}

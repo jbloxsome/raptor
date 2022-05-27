@@ -94,52 +94,52 @@ func NewCoinbase(pair string) (*Coinbase, error) {
 				orderbook <-&currentOrderbook
 			} else if asMessage.Type == "l2update" {
 				
-				// for _, change := range asMessage.Changes {
+				for _, change := range asMessage.Changes {
 
-				// 	price, err := strconv.ParseFloat(change[1], 64)
-				// 	if err != nil {
-				// 		log.Println("read:", err)
-				// 		return
-				// 	}
+					price, err := strconv.ParseFloat(change[1], 64)
+					if err != nil {
+						log.Println("read:", err)
+						return
+					}
 
-				// 	volume, err := strconv.ParseFloat(change[2], 64)
-				// 	if err != nil {
-				// 		log.Println("read:", err)
-				// 		return
-				// 	}
+					volume, err := strconv.ParseFloat(change[2], 64)
+					if err != nil {
+						log.Println("read:", err)
+						return
+					}
 
-				// 	if change[0] == "buy" {
-				// 		if change[2] != "0" {
-				// 			// Add or update bid level in orderbook
-				// 			level := currentOrderbook.GetBidLevel(price)
-				// 			if level != nil {
-				// 				currentOrderbook.RemoveBidLevel(price)
-				// 			}
+					if change[0] == "buy" {
+						if volume > 0.0 {
+							// Add or update bid level in orderbook
+							level := currentOrderbook.GetBidLevel(price)
+							if level != nil {
+								currentOrderbook.RemoveBidLevel(price)
+							}
 
-				// 			currentOrderbook.AddBidLevel(price, volume)
-				// 		} else {
-				// 			// Remove bid level from orderbook
-				// 			currentOrderbook.RemoveBidLevel(price)
-				// 		}
-				// 	}
+							currentOrderbook.AddBidLevel(price, volume)
+						} else {
+							// Remove bid level from orderbook
+							currentOrderbook.RemoveBidLevel(price)
+						}
+					}
 
-				// 	if change[0] == "sell" {
-				// 		if change[2] != "0" {
-				// 			// Add or update ask level in orderbook
-				// 			level := currentOrderbook.GetAskLevel(price)
-				// 			if level != nil {
-				// 				currentOrderbook.RemoveAskLevel(price)
-				// 			}
+					if change[0] == "sell" {
+						if volume > 0.0 {
+							// Add or update ask level in orderbook
+							level := currentOrderbook.GetAskLevel(price)
+							if level != nil {
+								currentOrderbook.RemoveAskLevel(price)
+							}
 
-				// 			currentOrderbook.AddAskLevel(price, volume)
-				// 		} else {
-				// 			// Remove ask level from orderbook
-				// 			currentOrderbook.RemoveAskLevel(price)
-				// 		}
-				// 	}
-				// }
+							currentOrderbook.AddAskLevel(price, volume)
+						} else {
+							// Remove ask level from orderbook
+							currentOrderbook.RemoveAskLevel(price)
+						}
+					}
+				}
 
-				// orderbook <-&currentOrderbook
+				orderbook <-&currentOrderbook
 			}	
 		}
 	}()
