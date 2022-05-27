@@ -2,7 +2,8 @@
 Raptor provides a consistent Golang API for retrieving orderbook data from Crypto exchanges in real-time.
 
 ## Supported Exchanges
-- Coinbase Pro
+- Coinbase
+- FTX
 
 ## Example Usage
 Orderbooks are streamed over a channel:

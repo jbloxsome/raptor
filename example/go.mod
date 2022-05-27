@@ -15,3 +15,5 @@ require (
 replace github.com/jbloxsome/raptor/orderbook => ../orderbook
 
 replace github.com/jbloxsome/raptor/rbbst => ../rbbst
+
+replace github.com/jbloxsome/raptor/ftx => ../ftx
