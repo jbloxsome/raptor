@@ -4,14 +4,14 @@ import (
 	"os"
 	"log"
 
-	"github.com/jbloxsome/raptor/coinbase"
+	// "github.com/jbloxsome/raptor/coinbase"
 	"github.com/jbloxsome/raptor/ftx"
 )
 
 func main() {
 	interrupt := make(chan os.Signal, 1)
 
-	btc_usd, err := ftx.NewFTX("BTC-USD")
+	btc_usd, err := ftx.NewFTX("BTC/USD")
 	if err != nil {
 		panic(err)
 	}

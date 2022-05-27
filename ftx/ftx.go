@@ -2,7 +2,7 @@ package ftx
 
 import (
 	"log"
-	"strconv"
+	"time"
 	"net/url"
 	"encoding/json"
 
@@ -10,13 +10,20 @@ import (
 	ob "github.com/jbloxsome/raptor/orderbook"
 )
 
+type MessageData struct {
+	Action string
+	Time float64
+	Checksum float64
+	Bids [][]float64
+	Asks [][]float64
+}
+
 // Struct for deserialising messages received over the FTX websocket
 type Message struct {
-	Action string
-	Bids [][]string
-	Asks [][]string
-	Checksum string
-	Time string
+	Channel string
+	Market string
+	Type string
+	Data MessageData
 }
 
 type FTX struct {
@@ -27,7 +34,7 @@ type FTX struct {
 
 func NewFTX(pair string) (*FTX, error) {
 	// Open websocket connection
-	u := url.URL{Scheme: "wss", Host: "wss://ftx.com", Path: "/ws",}
+	u := url.URL{Scheme: "wss", Host: "ftx.com", Path: "/ws/",}
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		return nil, err
@@ -57,109 +64,64 @@ func NewFTX(pair string) (*FTX, error) {
 				return
 			}
 
-			if asMessage.Type == "partial" {
-				for _, bid := range asMessage.Bids {
-					price, err := strconv.ParseFloat(bid[0], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					volume, err := strconv.ParseFloat(bid[1], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					currentOrderbook.AddBidLevel(price, volume)
+			if asMessage.Data.Action == "partial" {
+				for _, bid := range asMessage.Data.Bids {
+					currentOrderbook.AddBidLevel(bid[0], bid[1])
 				}
 				
-				for _, ask := range asMessage.Asks {
-					price, err := strconv.ParseFloat(ask[0], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					volume, err := strconv.ParseFloat(ask[1], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					currentOrderbook.AddAskLevel(price, volume)
+				for _, ask := range asMessage.Data.Asks {
+					currentOrderbook.AddAskLevel(ask[0], ask[1])
 				}
 
 				orderbook <-&currentOrderbook
-			} else if asMessage.Type == "update" {
+			} else if asMessage.Data.Action == "update" {
+				start := time.Now()
 
-				for _, bid := range asMessage.Bids {
-					price, err := strconv.ParseFloat(bid[0], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					volume, err := strconv.ParseFloat(bid[1], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					if volume > 0.0 {
+				for _, bid := range asMessage.Data.Bids {
+					if bid[1] > 0.0 {
 						// Add or update bid level in orderbook
-						level := currentOrderbook.GetBidLevel(price)
+						level := currentOrderbook.GetBidLevel(bid[0])
 						if level != nil {
-							currentOrderbook.RemoveBidLevel(price)
+							currentOrderbook.RemoveBidLevel(bid[0])
 						}
 
-						currentOrderbook.AddBidLevel(price, volume)
+						currentOrderbook.AddBidLevel(bid[0], bid[1])
 					} else {
 						// Remove bid level from orderbook
-						currentOrderbook.RemoveBidLevel(price)
+						currentOrderbook.RemoveBidLevel(bid[0])
 					}
 				}
 
-				for _, ask := range asMessage.Ask {
-					price, err := strconv.ParseFloat(ask[0], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					volume, err := strconv.ParseFloat(ask[1], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					if volume > 0.0 {
+				for _, ask := range asMessage.Data.Asks {
+					if ask[1] > 0.0 {
 						// Add or update ask level in orderbook
-						level := currentOrderbook.GetAskLevel(price)
+						level := currentOrderbook.GetAskLevel(ask[0])
 						if level != nil {
-							currentOrderbook.RemoveAskLevel(price)
+							currentOrderbook.RemoveAskLevel(ask[0])
 						}
 
-						currentOrderbook.AddAskLevel(price, volume)
+						currentOrderbook.AddAskLevel(ask[0], ask[1])
 					} else {
 						// Remove ask level from orderbook
-						currentOrderbook.RemoveAskLevel(price)
+						currentOrderbook.RemoveAskLevel(ask[0])
 					}
 				}
+
+				log.Printf("orderbook update, execution time %s\n", time.Since(start))
 
 				orderbook <-&currentOrderbook
 			}	
 		}
 	}()
 
-	return &Coinbase{
+	return &FTX{
 		Pair: pair,
 		Orderbook: orderbook,
 		Connection: c,
 	}, nil
 }
 
-func (c *Coinbase) Close() {
+func (c *FTX) Close() {
 	c.Connection.Close()
 	close(c.Orderbook)
 	return

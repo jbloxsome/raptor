@@ -4,11 +4,14 @@ go 1.18
 
 replace github.com/jbloxsome/raptor/coinbase => ../coinbase
 
-require github.com/jbloxsome/raptor/coinbase v0.0.0-00010101000000-000000000000
+require (
+	github.com/jbloxsome/raptor/coinbase v0.0.0-00010101000000-000000000000
+	github.com/jbloxsome/raptor/ftx v0.0.0-00010101000000-000000000000
+)
 
 require (
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/jbloxsome/raptor/orderbook v0.0.0-00010101000000-000000000000 // indirect
+	github.com/jbloxsome/raptor/orderbook v0.0.0-20220527171206-0884d3234ae5 // indirect
 	github.com/jbloxsome/raptor/rbbst v0.0.0-00010101000000-000000000000 // indirect
 )
 
