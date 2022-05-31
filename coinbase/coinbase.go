@@ -3,6 +3,7 @@ package coinbase
 import (
 	"log"
 	"strconv"
+	"time"
 	"net/url"
 	"encoding/json"
 
@@ -93,6 +94,7 @@ func NewCoinbase(pair string) (*Coinbase, error) {
 
 				orderbook <-&currentOrderbook
 			} else if asMessage.Type == "l2update" {
+				start := time.Now()
 				
 				for _, change := range asMessage.Changes {
 
@@ -138,6 +140,8 @@ func NewCoinbase(pair string) (*Coinbase, error) {
 						}
 					}
 				}
+
+				log.Printf("orderbook update, execution time %s\n", time.Since(start))
 
 				orderbook <-&currentOrderbook
 			}	

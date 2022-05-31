@@ -4,22 +4,22 @@ import (
 	"os"
 	"log"
 
-	// "github.com/jbloxsome/raptor/coinbase"
-	"github.com/jbloxsome/raptor/ftx"
+	"github.com/jbloxsome/raptor/coinbase"
+	// "github.com/jbloxsome/raptor/ftx"
 )
 
 func main() {
 	interrupt := make(chan os.Signal, 1)
 
-	btc_usd, err := ftx.NewFTX("BTC/USD")
-	if err != nil {
-		panic(err)
-	}
-
-	// btc_usd, err := coinbase.NewCoinbase("BTC-USD")
+	// btc_usd, err := ftx.NewFTX("BTC/USD")
 	// if err != nil {
 	// 	panic(err)
 	// }
+
+	btc_usd, err := coinbase.NewCoinbase("BTC-USD")
+	if err != nil {
+		panic(err)
+	}
 
 	// eth_usd, err := coinbase.NewCoinbase("ETH-USD")
 	// if err != nil {
@@ -33,11 +33,15 @@ func main() {
 
 	go func() {
 		for orderbook := range btc_usd.Orderbook {
-			maxBid := orderbook.Bids.Max()
-			minAsk := orderbook.Asks.Min()
+			// maxBid := orderbook.Bids.Max()
+			// secondBid := orderbook.Bids.Size()
+			// minAsk := orderbook.Asks.Min()
+			prices := orderbook.Bids.Keys(31500, orderbook.Bids.Max())
 
-			midMarket := (maxBid + minAsk) / 2
-			log.Printf("BTC-USD: %f", midMarket) 
+			// midMarket := (maxBid + minAsk) / 2
+			log.Printf("BTC-USD: %f", prices) 
+			// log.Printf("First: %f", maxBid)
+			// log.Printf("Second: %v", secondBid)
 		}
 	}()
 
