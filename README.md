@@ -8,8 +8,8 @@ Raptor provides a consistent Golang library for retrieving orderbook data from C
 ## Performance
 The orderbook data is stored within a Red Black Tree. The code for the RBT can be found under /rbbst. Benchmarks for a tree with 1 million nodes resulted in the following:
 
-Insert - 210 ns/op
-Get    - 115 ns/op
+- Insert - 210 ns/op
+- Get    - 115 ns/op
 
 ## Example Usage
 Orderbooks are streamed over a channel:
