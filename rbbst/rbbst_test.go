@@ -182,7 +182,7 @@ func TestKeys(t *testing.T) {
 func BenchmarkPut(b *testing.B) {
 	rbt := NewRedBlackBST()
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < 10000; i++ {
 		rbt.Put(float64(i), float64(i))
 	}
 
@@ -194,11 +194,11 @@ func BenchmarkPut(b *testing.B) {
 func BenchmarkGet(b *testing.B) {
 	rbt := NewRedBlackBST()
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < 10000; i++ {
 		rbt.Put(float64(i), float64(i))
 	}
 
 	for i := 0; i < b.N; i++ {
-		rbt.Get(50000.00)
+		rbt.Get(5000.00)
 	}
 }
