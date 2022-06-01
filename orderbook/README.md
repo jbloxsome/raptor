@@ -2,6 +2,10 @@
 Raptor's orderbook module provides a convenient wrapper around the rbbst package for maintaining a level 2 orderbook with high read/write performance.
 
 ## Usage
+### Importing
+```go
+import "github.com/jbloxsome/raptor/orderbook"
+```
 ### Creating an orderbook
 ```go
 ob := NewOrderbook()
