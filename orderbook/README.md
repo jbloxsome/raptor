@@ -1,5 +1,5 @@
 # Raptor Orderbook
-Raptor's orderbook package provides a convenient wrapper around the rbbst package for maintaining a level 2 orderbook with high read/write performance.
+Raptor's orderbook module provides a convenient wrapper around the rbbst package for maintaining a level 2 orderbook with high read/write performance.
 
 ## Usage
 ### Creating an orderbook
