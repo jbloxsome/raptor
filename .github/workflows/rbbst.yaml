@@ -28,4 +28,4 @@ jobs:
         run: go mod tidy
       - name: go list
         working-directory: ./rbbst
-        run: GOPROXY=proxy.golang.org go list -m github.com/${{ github.respository }}/rbbst@${{ github.ref_name }}
+        run: GOPROXY=proxy.golang.org go list -m github.com/${{ github.repository }}/rbbst@${{ github.ref_name }}
