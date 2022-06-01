@@ -3,20 +3,31 @@ name: rbbst
 on: [push]
 
 jobs:
-  test:
+  test_rbbst:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
           go-version: '^1.18.2'
-      - name: run tests
+      - name: run test rbbst
         working-directory: ./rbbst
+        run: go test -v -bench=.
+      
+  test_orderbook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '^1.18.2'
+      - name: run test orderbook
+        working-directory: ./orderbook
         run: go test -v -bench=.
 
   publish:
     if: ${{ github.ref_type == 'tag' }}
-    needs: test
+    needs: [test_rbbst, test_orderbook]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,8 +35,6 @@ jobs:
         with:
           go-version: '^1.18.2'
       - name: go mod tidy
-        working-directory: ./rbbst
         run: go mod tidy
       - name: go list
-        working-directory: ./rbbst
-        run: GOPROXY=proxy.golang.org go list -m github.com/${{ github.repository }}/rbbst@${{ github.ref_name }}
+        run: GOPROXY=proxy.golang.org go list -m github.com/${{ github.repository }}@${{ github.ref_name }}
