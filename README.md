@@ -34,7 +34,10 @@ func main() {
 
 	go func() {
 		for orderbook := range coinbase.Orderbook {
-			log.Println(orderbook) 
+			maxBid := orderbook.Bids.Max()
+			minAsk := orderbook.Asks.Min()
+			midPrice := (maxBid + minAsk) / 2
+			log.Printf("Coinbase BTC/USD mid price - %f", midPrice)
 		}
 	}()
 
