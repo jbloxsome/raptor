@@ -8,7 +8,7 @@ import "github.com/jbloxsome/raptor/orderbook"
 ```
 ### Creating an orderbook
 ```go
-ob := NewOrderbook()
+ob := orderbook.NewOrderbook()
 ```
 ### Inserting, Removing and Fetching Levels
 To insert a bid level with price @ 34542.12 and volume @ 1.234
