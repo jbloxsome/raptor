@@ -13,9 +13,9 @@ jobs:
       - name: run tests
         working-directory: ./rbbst
         run: go test -v -bench=.
-        
+
   publish:
-    if: contains(github.ref, 'refs/tags/')
+    if: ${{ github.ref_type == 'tag' }}
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -23,6 +23,9 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: '^1.18.2'
-      - name: run tests
+      - name: go mod tidy
         working-directory: ./rbbst
-        run: go test -v -bench=.
+        run: go mod tidy
+      - name: go list
+        working-directory: ./rbbst
+        run: GOPROXY=proxy.golang.org go list -m github.com/${{ github.respository }}/rbbst@${{ github.ref_name }}
