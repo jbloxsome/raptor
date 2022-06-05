@@ -15,11 +15,11 @@ func TestHandleSnapshot(t *testing.T) {
 	}
 
 
-	ob := ob.NewOrderbook()
+	orderbook := ob.NewOrderbook()
 
-	handleSnapshot(&ob, message)
+	handleSnapshot(&orderbook, message)
 
-	level := ob.GetBidLevel(30000.00)
+	level := orderbook.GetBidLevel(30000.00)
 
 	if level == nil {
 		t.Errorf("got nil, want %f", []float64{30000.00, 0.453})
@@ -33,7 +33,7 @@ func TestHandleSnapshot(t *testing.T) {
 		t.Errorf("got %f, want %v", level, []float64{30000, 0.453})
 	}
 
-	level = ob.GetBidLevel(30050.00)
+	level = orderbook.GetBidLevel(30050.00)
 
 	if level == nil {
 		t.Errorf("got nil, want %f", []float64{30050.00, 0.324})
@@ -48,29 +48,51 @@ func TestHandleSnapshot(t *testing.T) {
 	}
 }
 
+// TODO:
+// Add Ask Level, Update Ask Level, Remove Ask Level
 func TestHandleL2Update(t *testing.T) {
 	// Create an orderbook and add 5000 bid levels and 5000 ask levels
-	ob := ob.NewOrderbook()
+	orderbook := ob.NewOrderbook()
 
 	for i := 30000.00; i <= 35000.00; i++ {
-		ob.AddBidLevel(i, 0.342)
+		orderbook.AddBidLevel(i, 0.342)
 	}
 
 	for j := 35001.00; j <= 40000.00; j++ {
-		ob.AddAskLevel(j, 0.343)
+		orderbook.AddAskLevel(j, 0.343)
 	}
 
 	message := &Message{
 		Type: "l2update",
 		ProductId: "BTC-USD",
-		Changes: [][]string{[]string{"buy", "35000.00", "0.100"}},
+		Changes: [][]string{
+			[]string{"buy", "29000.00", "0.400"},
+			[]string{"buy", "35000.00", "0.100"},
+			[]string{"buy", "34999.00", "0.000"},
+		},
 	}
 
-	handleL2Update(&ob, message)
+	handleL2Update(&orderbook, message)
+
+	// {"buy", "29000.00", "0.400"} should add a new bid level at 29000.00 with volume
+	// of 0.400
+	level := orderbook.GetBidLevel(29000.00)
+
+	if level == nil {
+		t.Errorf("got nil, want %f", []float64{29000.00, 0.400})
+	}
+
+	if level[0] != 29000.00 {
+		t.Errorf("got %f, want %v", level, []float64{29000.00, 0.400})
+	}
+
+	if level[1] != 0.400 {
+		t.Errorf("got %f, want %v", level, []float64{29000.00, 0.400})
+	}
 
 	// {"buy", "35000.00", "0.100"} should replace the 35000 bid level volume
 	// with a new volume of 0.100
-	level := ob.GetBidLevel(35000.00)
+	level = orderbook.GetBidLevel(35000.00)
 
 	if level == nil {
 		t.Errorf("got nil, want %f", []float64{30000.00, 0.100})
@@ -83,17 +105,24 @@ func TestHandleL2Update(t *testing.T) {
 	if level[1] != 0.100 {
 		t.Errorf("got %f, want %v", level, []float64{35000.00, 0.100})
 	}
+
+	// {"buy", "34999.00", "0.000"} should remove the 34999 bid level
+	level = orderbook.GetBidLevel(34999.00)
+
+	if level != nil {
+		t.Errorf("got %f, want nil", level)
+	}
 }
 
 func BenchmarkL2Update(b *testing.B) {
-	ob := ob.NewOrderbook()
+	orderbook := ob.NewOrderbook()
 
 	for i := 30000.00; i <= 35000.00; i++ {
-		ob.AddBidLevel(i, 0.342)
+		orderbook.AddBidLevel(i, 0.342)
 	}
 
 	for j := 35001.00; j <= 40000.00; j++ {
-		ob.AddAskLevel(j, 0.343)
+		orderbook.AddAskLevel(j, 0.343)
 	}
 
 	message := &Message{
@@ -107,6 +136,6 @@ func BenchmarkL2Update(b *testing.B) {
 	}	
 
 	for i := 0; i < b.N; i++ {
-		handleL2Update(&ob, message)
+		handleL2Update(&orderbook, message)
 	}
 }
