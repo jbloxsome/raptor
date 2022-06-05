@@ -3,7 +3,6 @@ package coinbase
 import (
 	"log"
 	"strconv"
-	"time"
 	"net/url"
 	"encoding/json"
 
@@ -25,6 +24,81 @@ type Coinbase struct {
 	Pair string
 	Orderbook chan *ob.Orderbook
 	Connection *websocket.Conn
+}
+
+func handleSnapshot(orderbook *ob.Orderbook, message *Message) {
+	for _, bid := range message.Bids {
+		price, err := strconv.ParseFloat(bid[0], 64)
+		if err != nil {
+			log.Println("read:", err)
+		}
+
+		volume, err := strconv.ParseFloat(bid[1], 64)
+		if err != nil {
+			log.Println("read:", err)
+		}
+
+		orderbook.AddBidLevel(price, volume)
+	}
+	
+	for _, ask := range message.Asks {
+		price, err := strconv.ParseFloat(ask[0], 64)
+		if err != nil {
+			log.Println("read:", err)
+		}
+
+		volume, err := strconv.ParseFloat(ask[1], 64)
+		if err != nil {
+			log.Println("read:", err)
+		}
+
+		orderbook.AddAskLevel(price, volume)
+	}
+}
+
+func handleL2Update(orderbook *ob.Orderbook, message *Message) {
+	for _, change := range message.Changes {
+
+		price, err := strconv.ParseFloat(change[1], 64)
+		if err != nil {
+			log.Println("read:", err)
+		}
+
+		volume, err := strconv.ParseFloat(change[2], 64)
+		if err != nil {
+			log.Println("read:", err)
+		}
+
+		if change[0] == "buy" {
+			if volume > 0.0 {
+				// Add or update bid level in orderbook
+				level := orderbook.GetBidLevel(price)
+				if level != nil {
+					orderbook.RemoveBidLevel(price)
+				}
+
+				orderbook.AddBidLevel(price, volume)
+			} else {
+				// Remove bid level from orderbook
+				orderbook.RemoveBidLevel(price)
+			}
+		}
+
+		if change[0] == "sell" {
+			if volume > 0.0 {
+				// Add or update ask level in orderbook
+				level := orderbook.GetAskLevel(price)
+				if level != nil {
+					orderbook.RemoveAskLevel(price)
+				}
+
+				orderbook.AddAskLevel(price, volume)
+			} else {
+				// Remove ask level from orderbook
+				orderbook.RemoveAskLevel(price)
+			}
+		}
+	}
 }
 
 func NewCoinbase(pair string) (*Coinbase, error) {
@@ -60,89 +134,10 @@ func NewCoinbase(pair string) (*Coinbase, error) {
 			}
 
 			if asMessage.Type == "snapshot" {
-				for _, bid := range asMessage.Bids {
-					price, err := strconv.ParseFloat(bid[0], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					volume, err := strconv.ParseFloat(bid[1], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					currentOrderbook.AddBidLevel(price, volume)
-				}
-				
-				for _, ask := range asMessage.Asks {
-					price, err := strconv.ParseFloat(ask[0], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					volume, err := strconv.ParseFloat(ask[1], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					currentOrderbook.AddAskLevel(price, volume)
-				}
-
+				handleSnapshot(&currentOrderbook, &asMessage)
 				orderbook <-&currentOrderbook
 			} else if asMessage.Type == "l2update" {
-				start := time.Now()
-				
-				for _, change := range asMessage.Changes {
-
-					price, err := strconv.ParseFloat(change[1], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					volume, err := strconv.ParseFloat(change[2], 64)
-					if err != nil {
-						log.Println("read:", err)
-						return
-					}
-
-					if change[0] == "buy" {
-						if volume > 0.0 {
-							// Add or update bid level in orderbook
-							level := currentOrderbook.GetBidLevel(price)
-							if level != nil {
-								currentOrderbook.RemoveBidLevel(price)
-							}
-
-							currentOrderbook.AddBidLevel(price, volume)
-						} else {
-							// Remove bid level from orderbook
-							currentOrderbook.RemoveBidLevel(price)
-						}
-					}
-
-					if change[0] == "sell" {
-						if volume > 0.0 {
-							// Add or update ask level in orderbook
-							level := currentOrderbook.GetAskLevel(price)
-							if level != nil {
-								currentOrderbook.RemoveAskLevel(price)
-							}
-
-							currentOrderbook.AddAskLevel(price, volume)
-						} else {
-							// Remove ask level from orderbook
-							currentOrderbook.RemoveAskLevel(price)
-						}
-					}
-				}
-
-				log.Printf("orderbook update, execution time %s\n", time.Since(start))
-
+				handleL2Update(&currentOrderbook, &asMessage)
 				orderbook <-&currentOrderbook
 			}	
 		}
