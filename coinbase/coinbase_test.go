@@ -49,7 +49,7 @@ func TestHandleSnapshot(t *testing.T) {
 }
 
 // TODO:
-// Add Ask Level, Update Ask Level, Remove Ask Level
+// Remove Ask Level
 func TestHandleL2Update(t *testing.T) {
 	// Create an orderbook and add 5000 bid levels and 5000 ask levels
 	orderbook := ob.NewOrderbook()
@@ -69,6 +69,9 @@ func TestHandleL2Update(t *testing.T) {
 			[]string{"buy", "29000.00", "0.400"},
 			[]string{"buy", "35000.00", "0.100"},
 			[]string{"buy", "34999.00", "0.000"},
+			[]string{"sell", "35000.50", "0.100"},
+			[]string{"sell", "35002.00", "0.250"},
+			[]string{"sell", "35003.00", "0.000"},
 		},
 	}
 
@@ -112,6 +115,45 @@ func TestHandleL2Update(t *testing.T) {
 	if level != nil {
 		t.Errorf("got %f, want nil", level)
 	}
+
+	// {"sell", "35000.50", "0.100"} should add a new ask level at 35000.50 with volume
+	// of 0.100
+	level = orderbook.GetAskLevel(35000.50)
+
+	if level == nil {
+		t.Errorf("got nil, want %f", []float64{35000.50, 0.100})
+	}
+
+	if level[0] != 35000.50 {
+		t.Errorf("got %f, want %v", level, []float64{35000.50, 0.100})
+	}
+
+	if level[1] != 0.100 {
+		t.Errorf("got %f, want %v", level, []float64{35000.50, 0.100})
+	}
+
+	// {"sell", "35002.00", "0.250"} should replace the 35002 ask level volume
+	// with a new volume of 0.250
+	level = orderbook.GetAskLevel(35002.00)
+
+	if level == nil {
+		t.Errorf("got nil, want %f", []float64{35002.00, 0.250})
+	}
+
+	if level[0] != 35002.00 {
+		t.Errorf("got %f, want %v", level, []float64{35002.00, 0.250})
+	}
+
+	if level[1] != 0.250 {
+		t.Errorf("got %f, want %v", level, []float64{35002.00, 0.250})
+	}
+
+	// {"sell", "35003.00", "0.000"} should remove the 35003 ask level
+	level = orderbook.GetAskLevel(35003.00)
+
+	if level != nil {
+		t.Errorf("got %f, want nil", level)
+	}
 }
 
 func BenchmarkL2Update(b *testing.B) {
@@ -129,11 +171,14 @@ func BenchmarkL2Update(b *testing.B) {
 		Type: "l2update",
 		ProductId: "BTC-USD",
 		Changes: [][]string{
+			[]string{"buy", "29000.00", "0.400"},
 			[]string{"buy", "35000.00", "0.100"},
-			[]string{"buy", "35001.00", "0.321"},
-			[]string{"sell", "35001.50", "3.424"},
+			[]string{"buy", "34999.00", "0.421"},
+			[]string{"sell", "35000.50", "0.100"},
+			[]string{"sell", "35002.00", "0.250"},
+			[]string{"sell", "35003.00", "0.400"},
 		},
-	}	
+	}
 
 	for i := 0; i < b.N; i++ {
 		handleL2Update(&orderbook, message)
