@@ -2,7 +2,7 @@
 Raptor provides a consistent Golang library for retrieving orderbook data from Crypto exchanges in real-time.
 
 ## Supported Exchanges
-- Coinbase
+- [Coinbase](https://github.com/jbloxsome/raptor/tree/main/coinbase)
 - FTX
 
 ## Performance
