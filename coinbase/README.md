@@ -25,3 +25,13 @@ for orderbook := range ob.Orderbook {
     log.Printf("BTC-USD: %f", midMarket)
 }
 ```
+
+To list the price levels:
+```go
+for orderbook := range ob.Orderbook {
+    bids := orderbook.Bids.Keys(orderbook.Bids.Min(), orderbook.Bids.Max())
+    asks := orderbook.Asks.Keys(orderbook.Asks.Min(), orderbook.Asks.Max())
+    log.Printf("Bids: %f", bids)
+    log.Printf("Asks: %f", asks)
+}
+```
